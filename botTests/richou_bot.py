@@ -27,7 +27,7 @@ def handle(msg):
 				bot.sendMessage(chat_id, "Tu es rayonnante aujourd'hui Fanny !")
 			elif from_first_name=='antoine' and from_last_name=='daigremont' :
 				bot.sendMessage(chat_id, "Tu as un super humour Antoine !")
-			elif from_first_name=='vincent' and from_last_name=='poirier' :
+			elif from_id==151270213 :
 				bot.sendMessage(chat_id, "Tu as un super cerveau Vincent !")
 			elif from_first_name=='Cgallere' and from_last_name=='Cesar' :
 				bot.sendMessage(chat_id, "Tu as de belles chaussettes aujourd'hui Yoann !")
