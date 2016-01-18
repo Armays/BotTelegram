@@ -6,7 +6,7 @@ import time
 from pprint import pprint
 import pickle
 #token = sys.argv[1]
-token='135994390:AAEF-1YrQ6vxELe-xRDqyZndRgbI0_8Uino'
+token=''
 bot = telepot.Bot(token)
 def handle(msg):
 	

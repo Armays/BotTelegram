@@ -36,7 +36,7 @@ def handle(msg):
 					bot.sendMessage(chat_id,'Cette requête renvoie plusieurs résultats, est ce que vous vouliez dire  :')
 					bot.sendMessage(chat_id,e.options)
 
-bot = telepot.Bot('164988326:AAFQtCjzoww-B91TJ5XeiAPC0lGT2ubHEDo')
+bot = telepot.Bot('')
 bot.notifyOnMessage(handle)
 print ('Listening ...')
 
