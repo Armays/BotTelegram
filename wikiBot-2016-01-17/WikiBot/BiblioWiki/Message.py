@@ -7,11 +7,20 @@ import pickle
 
 def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	if tableauMot[0] == '/help' :
-		bot.sendMessage(chat_id,'Enter /get + researched word to search a word on Wikipedia, enter /rate + researched word to rate the bot, enter /hello to see your precedent messages, enter /send to send a sticker, photo or document.')
+		bot.sendMessage(chat_id,'Enter /get + researched word to search a word on Wikipedia, enter /change to change the lang, enter /rate + researched word to rate the bot, enter /hello to see your precedent messages, enter /send to send a sticker, photo or document.')
 	elif tableauMot[0] == '/get':
+		if nouveau:
+			bot.sendMessage(chat_id,'Which lang do you chose ?',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
 		if len(tableauMot) == 1 :
 			bot.sendMessage(chat_id, 'What is the word you are looking for ? Enter /get + researched word')
 		else :
+			with open("UserData","rb") as fichier :
+				monPickler = pickle.Unpickler(fichier)
+				DataBank = monPickler.load()
+			for i,elt in enumerate(DataBank):
+				if DataBank[i]['user_id']==msg['from']['id']:
+					lang=DataBank[i]['parametres']['lang']
+					wikipedia.set_lang(lang)
 			try:
 				tableauMot = tableauMot[1:]
 				print(tableauMot)
@@ -29,9 +38,10 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 				bot.sendMessage(chat_id,e.options)
 	elif tableauMot[0] == '/rate':
 		bot.sendMessage(chat_id,'How do you find this bot?', reply_markup={'keyboard': [['Awesome','Great'], ['average bot','It sucks']], 'force_reply': True})
+		
 	elif tableauMot[0] == '/hello' :
 		if nouveau:
-			bot.sendMessage(msg['chat']['id'],"Hi {} {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia. Tape /get and the word you are looking for to have the information. Tape /rate to rate this bot. This bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name'],msg['from']['last_name']))
+			bot.sendMessage(msg['chat']['id'],"Hi {} {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia. Tape /get and the word you are looking for to have the information. Tape /change to change the lang. Tape /rate to rate this bot. Tape /hello to have a welcome message. Tape /send to send a sticker, photo or document. This bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name'],msg['from']['last_name']))
 		else:
 			bot.sendMessage(msg['chat']['id'],"Hi again {} {} ! Here are your precedent messages : ".format(msg['from']['first_name'],msg['from']['last_name']))
 			with open("UserData","rb") as fichier :
@@ -43,7 +53,9 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 						bot.sendMessage(msg['chat']['id'],message['text'])
 	elif tableauMot[0] == '/send':
 		bot.sendMessage(msg['chat']['id'],"Hi you can send me a photo, a document or a sticker if you want",reply_markup={'force_reply': True})
-		#Cette section est incomplète pour le moment. C'est la partie qui s'occupera
+	elif tableauMot[0] == '/change':
+		bot.sendMessage(chat_id,'Which lang do you chose ?',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
+#Cette section est incomplète pour le moment. C'est la partie qui s'occupera
 #de realiser les commandes entrées par l'utilisateur. Et la réponse de bot
 #sera adaptée au contexte et aux préférences de l'utilisateur
 
@@ -54,19 +66,53 @@ def analyseTextNat(chat_id,donneesU,msg,tableauMot, bot):
 #Cette section analysera le texte et le contexte utilisateur
 #pour le rendre intelligible pour le reste du programme
 #Elle ne remplit aucune fonctionnalité pour le moment
+	global note
 	print(donneesU)
 	print((msg['message_id']))
 	#messPrec = donneesU['historique'][(msg['message_id'])-2]    #Attention: Les messages ID vont de deux en deux parce que chacune des réponses du bot sont considérées comme des messages de la part de Telegram.
-	if msg['text'] == 'Awesome':
-		bot.sendMessage(chat_id,"Thank you, it's very touching",reply_markup={'hide_keyboard':True})
-	elif msg['text'] == 'Great':
-		bot.sendMessage(chat_id,"Cool, dude",reply_markup={'hide_keyboard':True})
-	elif msg['text'] == 'average bot':
-		bot.sendMessage(chat_id,"we are gonna work on it",reply_markup={'hide_keyboard':True})
-	elif msg['text'] == 'It sucks':
-		bot.sendMessage(chat_id,"That's just mean",reply_markup={'hide_keyboard':True})
+	if msg['text'] == 'Awesome' or msg['text'] == 'Great' or msg['text'] == 'average bot' or msg['text'] == 'It sucks':
+		if msg['text'] == 'Awesome':
+			bot.sendMessage(chat_id,"Thank you, it's very touching",reply_markup={'hide_keyboard':True})
+			note=4
+		elif msg['text'] == 'Great':
+			bot.sendMessage(chat_id,"Cool, dude",reply_markup={'hide_keyboard':True})
+			note=3
+		elif msg['text'] == 'average bot':
+			bot.sendMessage(chat_id,"we are gonna work on it",reply_markup={'hide_keyboard':True})
+			note=2
+		elif msg['text'] == 'It sucks':
+			bot.sendMessage(chat_id,"That's just mean",reply_markup={'hide_keyboard':True})
+			note=1
+		with open("UserData","rb") as fichier :
+			monPickler = pickle.Unpickler(fichier)
+			DataBank = monPickler.load()
+			total=0
+			users=0
+			for i,elt in enumerate(DataBank):
+				if DataBank[i]['user_id']==msg['from']['id']:
+					DataBank[i]['parametres']['rate']=note
+				if 'rate' in DataBank[i]['parametres'].keys():
+					users=users+1
+					total=total+note
+			moyenne=total/users
+			bot.sendMessage(chat_id,"La moyenne générale du bot est de {} sur 4".format(moyenne))
+		with open("UserData","wb") as fichier:
+			monPickler = pickle.Pickler(fichier)
+			monPickler.dump(DataBank)
+	elif msg['text'] == 'fr' or msg['text'] == 'en':
+		with open("UserData","rb") as fichier :
+			monPickler = pickle.Unpickler(fichier)
+			DataBank = monPickler.load()
+			for i,elt in enumerate(DataBank):
+				if DataBank[i]['user_id']==msg['from']['id']:
+					DataBank[i]['parametres']['lang']=msg['text']
+		with open("UserData","wb") as fichier:
+			monPickler = pickle.Pickler(fichier)
+			monPickler.dump(DataBank)
+		bot.sendMessage(chat_id,"ok thanks !", reply_markup={'hide_keyboard':True})
 	else:
 		bot.sendMessage(chat_id,"That's make no sense",reply_markup={'hide_keyboard':True})
+	
 
 
 
