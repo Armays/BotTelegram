@@ -7,7 +7,7 @@ import pickle
 
 def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	if tableauMot[0] == '/help' :
-		bot.sendMessage(chat_id,'Enter /get + researched word')
+		bot.sendMessage(chat_id,'Enter /get + researched word to search a word on Wikipedia, enter /rate + researched word to rate the bot, enter /hello to see your precedent messages, enter /send to send a sticker, photo or document.')
 	elif tableauMot[0] == '/get':
 		if len(tableauMot) == 1 :
 			bot.sendMessage(chat_id, 'What is the word you are looking for ? Enter /get + researched word')
@@ -41,7 +41,7 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 					print(message)
 					if 'text' in message.keys():
 						bot.sendMessage(msg['chat']['id'],message['text'])
-	elif tableauMot[0] == '/envoi':
+	elif tableauMot[0] == '/send':
 		bot.sendMessage(msg['chat']['id'],"Hi you can send me a photo, a document or a sticker if you want",reply_markup={'force_reply': True})
 		#Cette section est incomplète pour le moment. C'est la partie qui s'occupera
 #de realiser les commandes entrées par l'utilisateur. Et la réponse de bot
