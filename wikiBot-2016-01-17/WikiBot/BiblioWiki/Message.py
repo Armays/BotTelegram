@@ -92,8 +92,9 @@ def analyseTextNat(chat_id,donneesU,msg,tableauMot, bot):
 				if DataBank[i]['user_id']==msg['from']['id']:
 					DataBank[i]['parametres']['rate']=note
 				if 'rate' in DataBank[i]['parametres'].keys():
+					print(DataBank[i]['parametres']['rate'])
 					users=users+1
-					total=total+note
+					total=total+DataBank[i]['parametres']['rate']
 			moyenne=total/users
 			bot.sendMessage(chat_id,"La moyenne générale du bot est de {} sur 4".format(moyenne))
 		with open("UserData","wb") as fichier:
