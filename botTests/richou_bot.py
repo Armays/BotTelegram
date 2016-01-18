@@ -20,7 +20,7 @@ def handle(msg):
 	
 	try:
 		command=msg['text']
-		if 'command' in locals():
+		if msg in locals():
 			if from_first_name=='dyhann' and from_last_name=='armays' :
 				bot.sendMessage(chat_id, "Je suis tout à fait d'accord avec toi Diane !")
 			elif from_id== 160494965 :
@@ -48,7 +48,7 @@ def handle(msg):
 		for extension in coupure :
 			if extension=='doc' or extension=='txt' or extension=='docx' :
 				bot.sendMessage(chat_id, "Je vais le lire tout de suite !")
-bot = telepot.Bot('148332132:AAGZDbBtAdATqPuTaJFXqnQDgXv9Bn4RDW4')
+bot = telepot.Bot('')
 bot.notifyOnMessage(handle)
 print ('I am listening ...')
 
