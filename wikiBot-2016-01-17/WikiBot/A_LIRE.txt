@@ -1,0 +1,9 @@
+ Lancez "InitiationDonnees.py" avant de demarrer la main pour la première fois"
+ 
+ Une fois L'initiation lancée, vous pouvez lancez la main mais vous devez placer votre "token" en argument.
+ Si vous ne possédez pas de token, vous pouvez vous en procurer un facilement. Pour ce faire, allez sur Telegram et engager une conversatiion avec "BotFather", puis suivez ses instructions.
+ 
+ /get pour obtenir les informations de Wikipedia.
+ /rate pour noter le bot.
+ Le bot répondera par un Sticker si vous lui en envoyé un.
+ Si vous lui envoyer du text, il ne vous répondra pas, sauf si le texte est la réponse au /rate.
