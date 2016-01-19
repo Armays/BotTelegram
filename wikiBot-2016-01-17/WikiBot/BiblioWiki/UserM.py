@@ -32,7 +32,7 @@ def read_UserData() :
 			DataBank = monPickler.load()
 	except EOFError :
 		DataBank=[]
-	print("UserData User = ",DataBank)
+	#print("UserData User = ",DataBank)
 	return(DataBank)
 
 def write_UserData(DataBank) :
@@ -42,6 +42,7 @@ def write_UserData(DataBank) :
 
 def identification(msg,bot):
 #Ouverture de la base de données, test de l'existance de l'utilisateur à l'intérieur :  Création de l'utilisateur si il n'existe pas et mise à jour de l'historique s'il existe. Puis renvoie des données utilisateur dans tous les cas
+	global indice
 	nouveauU=True
 	DataBank=read_UserData()
 	for i,elt in enumerate(DataBank):
@@ -52,20 +53,21 @@ def identification(msg,bot):
 			print('Reception d\'un message de',msg['from']['last_name'])
 			#print(DataBank)
 			DonneesUtilisateur = DataBank[i]
+			print("indice=",i)
+			indice=i #A la sortie du for i=indice+1
 	if nouveauU == True :
 		Data={'user_id':msg['from']['id'],'historique':{msg['message_id']: msg},'parametres':{}}
 		DataBank.append(Data)
 		print("Ajout d'un nouvel utilisateur, last_name= ",msg['from']['last_name'])
 		DonneesUtilisateur = DataBank[0]
-		i=len(DataBank)-1
+		indice=len(DataBank)-1
 #Cette partie reste à optimiser lorsque l'on sera plus sur de ce qu'on va retenir de
 #chaque utilisateur et de ce que l'on a comme paramètres sur chacun d'entre eux
 
 #Ces données sont renvoyées pour être réutilisées dans le main
-		
 
 #On fait une mise à jour de la base
 	write_UserData(DataBank)
-	return(nouveauU,i,DonneesUtilisateur)
+	return(nouveauU,indice,DonneesUtilisateur)
 
 
