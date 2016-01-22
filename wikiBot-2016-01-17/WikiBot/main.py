@@ -1,5 +1,5 @@
 #!/usr/bin/python3.4
-#-*- coding:Utf8 -*
+# -*-coding:Utf-8 -*
 
 """
 *****************************************************************************************
@@ -23,12 +23,11 @@ import telepot      							#Bibliothèque distante: Communicatiion avec l'API de
 from BiblioWiki.Pedia import *
 from BiblioWiki.UserM import *
 from BiblioWiki.Message import *
-#import sys          							#Bibliothèque systeme, pour la prise d'arguments entre autres. Marche sous linux mais pas sous windows
+import sys          							#Bibliothèque systeme, pour la prise d'arguments entre autres. Marche sous linux mais pas sous windows
 import time
 from pprint import pprint						#Permet d'afficher les listes et dictionnaires de manière structurée
 
 token = sys.argv[1] 							#Entrée du token en argument = Confidentialité/Code transportable
-#token ="135994390:AAEF-1YrQ6vxELe-xRDqyZndRgbI0_8Uino"
 bot = telepot.Bot(token)
 
 def messMan(msg):                        		#Reception du message

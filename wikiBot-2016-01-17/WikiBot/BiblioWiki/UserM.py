@@ -1,5 +1,5 @@
 #!/usr/bin/python3.4
-#-*- coding:Utf8 -*
+# -*-coding:Utf-8 -*
 
 import pickle   #Permet l'ouverture des fichiers en mode binaire
 """

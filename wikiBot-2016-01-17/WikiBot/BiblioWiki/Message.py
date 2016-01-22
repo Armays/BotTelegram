@@ -1,5 +1,5 @@
 #!/usr/bin/python3.4
-#-*- coding:Utf8 -*
+# -*-coding:Utf-8 -*
 
 """
 ********************************************************************
@@ -28,7 +28,7 @@ def write_UserData(DataBank) :
 
 def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	if tableauMot[0] == '/help' :
-		bot.sendMessage(chat_id,'They call me the Wikiwiki, I can help you make researches on Wikipedia. \nYou can control me by sending these commands: \nEnter /get + researched word to search a word on Wikipedia. \nEnter /change to change the language. \nEnter /rate to rate the bot. \nEnter /hello to see your precedent messages. \nEnter /send to send a sticker, photo or document.')
+		bot.sendMessage(chat_id,'They call me the Wikiwiki, I can help you make researches on Wikipedia. \nYou can control me by sending these commands: \nEnter /get + researched word to search a word on Wikipedia. \nEnter /language to change the language. \nEnter /rate to rate the bot. \nEnter /start to see your precedent messages. \nEnter /send to send a sticker, photo or document.')
 	elif tableauMot[0] == '/get':
 		DataBank=read_UserData()
 		#SI l'utilisateur n'a pas encore sélectionné sa langue
@@ -62,10 +62,10 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	elif tableauMot[0] == '/rate':
 		#force_reply à true pour que la réponse de l'utilisateur soit prise en compte par le bot
 		bot.sendMessage(chat_id,'How do you find this bot?', reply_markup={'keyboard': [['Awesome','Great'], ['Average bot','Useless']], 'force_reply': True})
-	elif tableauMot[0] == '/hello' :
-		#Si l'utilisateur tape /hello au bot pour la première fois, sans avoir tapé de messages avant.
+	elif tableauMot[0] == '/start' :
+		#Si l'utilisateur tape /start au bot pour la première fois, sans avoir tapé de messages avant.
 		if nouveau:
-			bot.sendMessage(chat_id,"Hi {} {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia.\n Tape /get and the word you are looking for to have the information. \nTape /change to change the language. \nTape /rate to rate this bot. \nTape /hello to have a welcome message. \nTape /send to send a sticker, photo or document. \nThis bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name'],msg['from']['last_name']))
+			bot.sendMessage(chat_id,"Hi {} {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia.\n type /get and the word you are looking for to have the information. \ntype /language to change the language. \ntype /rate to rate this bot. \ntype /start to have a welcome message. \ntype /send to send a sticker, photo or document. \nThis bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name'],msg['from']['last_name']))
 			bot.sendMessage(chat_id,'Please choose your language :',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
 		else:
 			bot.sendMessage(chat_id,"Hi again {} {} !".format(msg['from']['first_name'],msg['from']['last_name']))
@@ -74,7 +74,7 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 			nb=0
 			for message in DataBank[i]['historique'].values():
 				nb=nb+1
-			bot.sendMessage(msg['chat']['id'],"You have sent {} messages :)".format(nb))
+			bot.sendMessage(msg['chat']['id'],"You sent {} messages :)".format(nb))
 			#Transformation du dictionnaire de l'historique utilisateur en liste triée suivant les messages_id. Les messages_id sont des id uniques, et incrémentés par ordre chronologique
 			cles_triees=sorted(DataBank[i]['historique'].keys())
 			avant_dernier=cles_triees[len(cles_triees)-2]
@@ -106,7 +106,7 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	elif tableauMot[0] == '/send':
 		bot.sendMessage(chat_id,"Hi you can send me a photo, a document or a sticker if you want",reply_markup={'force_reply': True})
 	#Cette commande permet de changer la langue de recherche sur wikipedia
-	elif tableauMot[0] == '/change':
+	elif tableauMot[0] == '/language':
 		bot.sendMessage(chat_id,'Please choose your language :',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
 #Cette section est incomplète pour le moment. C'est la partie qui s'occupera
 #de realiser les commandes entrées par l'utilisateur. Et la réponse de bot
@@ -114,28 +114,44 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 
 
 
-def analyseTextNat(chat_id,donneesU,msg,tableauMot, bot):
+def analyseTextNat(i,chat_id,donneesU,msg,tableauMot, bot):
     
 #Cette section analysera le texte et le contexte utilisateur
 #pour le rendre intelligible pour le reste du programme
 #Elle ne remplit aucune fonctionnalité pour le moment
 	global note
+	rate=True
+	language=True
+	DataBank=read_UserData()
+	cles_triees=sorted(DataBank[i]['historique'].keys())
+	avant_avant_dernier=cles_triees[len(cles_triees)-3]
+	avant_dernier=cles_triees[len(cles_triees)-2]
+	avant_dernier_message=DataBank[i]['historique'][avant_dernier]
+	avant_avant_dernier_message=DataBank[i]['historique'][avant_avant_dernier]
 	#S'il sagit d'une réponse à /rate
-	if msg['text'] == 'Awesome' or msg['text'] == 'Great' or msg['text'] == 'Average bot' or msg['text'] == 'Useless':
-		#hide_keyboard permet de cacher le clavier car il a été affiché précédemment
-		if msg['text'] == 'Awesome':
-			bot.sendMessage(chat_id,"Thank you, it's very touching",reply_markup={'hide_keyboard':True})
-			note=4
-		elif msg['text'] == 'Great':
-			bot.sendMessage(chat_id,"Cool, dude",reply_markup={'hide_keyboard':True})
-			note=3
-		elif msg['text'] == 'Average bot':
-			bot.sendMessage(chat_id,"we are gonna work on it",reply_markup={'hide_keyboard':True})
-			note=2
-		elif msg['text'] == 'Useless':
-			bot.sendMessage(chat_id,"That's just mean",reply_markup={'hide_keyboard':True})
-			note=1
-		#On récupère la base de données des utilisateurs dan le fichier UserData
+	if avant_dernier_message['text']=='/rate' or (avant_avant_dernier_message['text']=='/rate' and avant_dernier_message['text']!='Awesome' and avant_dernier_message['text']!='Great' and avant_dernier_message['text']!='Average bot' and avant_dernier_message['text']!='Useless'):
+		while rate==True:
+			#hide_keyboard permet de cacher le clavier car il a été affiché précédemment
+			if msg['text'] == 'Awesome':
+				bot.sendMessage(chat_id,"Thank you, it's very touching",reply_markup={'hide_keyboard':True})
+				note=4
+				rate=False
+			elif msg['text'] == 'Great':
+				bot.sendMessage(chat_id,"Cool, dude",reply_markup={'hide_keyboard':True})
+				note=3
+				rate=False
+			elif msg['text'] == 'Average bot':
+				bot.sendMessage(chat_id,"we are gonna work on it",reply_markup={'hide_keyboard':True})
+				note=2
+				rate=False
+			elif msg['text'] == 'Useless':
+				bot.sendMessage(chat_id,"That's just mean",reply_markup={'hide_keyboard':True})
+				note=1
+				rate=False
+			else:
+				bot.sendMessage(chat_id,'How do you find this bot?', reply_markup={'keyboard': [['Awesome','Great'], ['Average bot','Useless']], 'force_reply': True})
+				rate=False
+				#On récupère la base de données des utilisateurs dan le fichier UserData
 		DataBank=read_UserData()
 		total=0
 		users=0
@@ -152,15 +168,24 @@ def analyseTextNat(chat_id,donneesU,msg,tableauMot, bot):
 		bot.sendMessage(chat_id,"The average rate of the bot is {} on 4".format(moyenne))
 		#Sauvegarde du vote dans les paramètres de la base de données
 		write_UserData(DataBank)
-	#S'il s'agit d'une réponse à /change, ou /get ou /hello pour la première fois, on enregistre la langue dans les paramètres
-	elif msg['text'] == 'fr' or msg['text'] == 'en':
-		DataBank=read_UserData()
-		for i,elt in enumerate(DataBank):
-			if DataBank[i]['user_id']==msg['from']['id']:
-				DataBank[i]['parametres']['language']=msg['text']
-				print(DataBank[i]['parametres'])
-		write_UserData(DataBank)
-		bot.sendMessage(chat_id,"OK thanks ! You can now tape your request.", reply_markup={'hide_keyboard':True})
+		#S'il s'agit d'une réponse à /language, ou /get ou /start pour la première fois, on enregistre la langue dans les paramètres
+	elif avant_dernier_message['text'] == '/language' or (avant_avant_dernier_message['text']=='/language' and avant_dernier_message['text']!='fr' and avant_dernier_message['text']!='en'):
+		print('test')
+		while language==True:
+			print('test2')
+			if msg['text']!='en' and msg['text']!='fr':
+				print('test3')
+				bot.sendMessage(chat_id,'Please choose your language :',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
+				language=False
+			else:
+				DataBank=read_UserData()
+				for i,elt in enumerate(DataBank):
+					if DataBank[i]['user_id']==msg['from']['id']:
+						DataBank[i]['parametres']['language']=msg['text']
+						print(DataBank[i]['parametres'])
+				write_UserData(DataBank)
+				bot.sendMessage(chat_id,"OK thanks ! You can now type your request.", reply_markup={'hide_keyboard':True})
+				language=False
 	#Si l'utilisateur entre autre chose comme texte que celui escompté
 	else:
 		bot.sendMessage(chat_id,"That makes no sense",reply_markup={'hide_keyboard':True})
@@ -177,7 +202,7 @@ def Traitement_Text(nouveau,i,chat_id, donneesU, msg, bot):
 	if(tableauMot[0][0] == '/'):
 		Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot)
 	else:
-		chat_id, donneesU, msg, bot = analyseTextNat(chat_id,donneesU,msg,tableauMot, bot)
+		chat_id, donneesU, msg, bot = analyseTextNat(i,chat_id,donneesU,msg,tableauMot, bot)
 
 
 def Traitement_Sticker(chat_id, msg, bot):
@@ -197,14 +222,14 @@ def Traitement_Sticker(chat_id, msg, bot):
 def Traitement_Doc(chat_id,msg,bot):
 	_, extension = os.path.splitext(msg['document']['file_name'])
 	bot.downloadFile(msg['document']['file_id'],msg['document']['file_id']+extension)
-	bot.sendMessage(chat_id,"I don't know how to manage Documents, but I keep it for you !")
+	bot.sendMessage(chat_id,"I don't know how to manage Documents, but I can keep it for you !")
 
 #Cette fonction télécharge toutes les photos envoyées
 def Traitement_Photo(chat_id,msg,bot):
 	for i,f in enumerate(msg['photo']):
 		if f['width']==90:
 			bot.downloadFile(f['file_id'],'{}.jpeg'.format(f['file_id']))
-	bot.sendMessage(chat_id,"I don't know how to manage Photo, but I keep it for you !")
+	bot.sendMessage(chat_id,"I don't know how to manage Photo, but I can keep it for you !")
 
 """
 Traitement de texte est la première fonction appellée, elle appelle une autre fonction traitement en fonction du contenu du message
