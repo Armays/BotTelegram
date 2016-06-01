@@ -13,7 +13,120 @@ import wikipedia
 from random import choice	#Pour le renvoi de stickers au hasard
 import pickle
 import os					#pour extraire l'extension des fichiers envoyés
+from subprocess import call
 
+import sys
+import time
+
+import pycurl
+
+from io import BytesIO
+from string import Template
+
+import lxml.html
+import json
+
+from collections import defaultdict
+from lxml import etree
+
+import string
+
+import ast
+
+def printMediaWikiInfobox(title):
+    #http://en.wikipedia.org/w/api.php?format=json&action=query&titles=India&prop=revisions&rvprop=content&callback=?
+    ENDPOINT = "http://fr.wikipedia.org"
+    QUERY = Template(("${WIKI}/w/api.php?action=parse"
+                                    "&format=json"
+                                    "&page=${page}"
+                                    "&prop=parsetree"
+                                    "&disablelimitreport="
+                                    "&disableeditsection="
+                                    "&disabletoc="
+                                    "&contentmodel=text"))
+
+    title = title.lower()
+
+    while True:
+
+        #construit la requete
+        page = title.replace(" ", "+")
+        page = page[0].upper() + page[1:]
+        qry = QUERY.substitute(WIKI=ENDPOINT, page=page)
+
+        #construit un objet curl pour notre requete
+        crl = pycurl.Curl()
+        crl.setopt(crl.FOLLOWLOCATION, True)
+
+        crl.setopt(crl.SSL_VERIFYHOST, False)
+        crl.setopt(crl.SSL_VERIFYPEER, False)
+
+        try:
+            crl.setopt(crl.URL, qry)
+        except UnicodeEncodeError:
+            crl.setopt(crl.URL, qry.encode('utf-8'))
+
+        #télécharge les données du serveur web
+        try:
+            bfr = BytesIO()
+            crl.setopt(crl.WRITEFUNCTION, bfr.write)
+            crl.perform()
+            data = bfr.getvalue()
+            bfr.close()
+        except Exception as detail:
+            print("RETRY Caught exception: %s" % detail)
+            return
+
+        #localise le dictionnaire de l'infobox
+        try:
+            dataDict = None
+            dataDict = json.loads(data.decode("utf-8"))
+            ptree = dataDict["parse"]["parsetree"]["*"].encode('utf-8')
+            title = dataDict["parse"]["title"].encode('utf-8')
+
+            for htmlitem in etree.fromstring(ptree).xpath("//template"):
+                if "box" in htmlitem.find('title').text:
+                    #infobox trouvee ! convertie en un dictionnaire json
+                    obj = dict()
+                    for item in htmlitem:
+                        try:
+                            name = item.findtext('name')
+                            tmpl = item.find('value').find('template')
+                            if tmpl is not None:
+                                pass #value = etree.tostring(tmpl)
+                            else:
+                                value = item.findtext('value')
+                            if name and value:
+                                obj[name.strip()] = value.strip()
+                        except:
+                            pass #obj["%s ERROR" % __name__] = etree.tostring(item)
+                    return(json.dumps(obj))
+
+            #pas d'infobox trouvee, on essaie de trouver une redirection
+            redirect = ""
+            for htmlitem in etree.fromstring(ptree).xpath("//text()"):
+                if htmlitem.startswith("#REDIRECT"):
+                    redirect = htmlitem.strip().split("REDIRECT")[-1].strip().strip("[[").strip("]]")
+                    break;
+
+            #si une redirection est trouvee, on essaiera avec ce nouveau titre
+            if redirect != "":
+                #print("found redirection: %s" % redirect)
+                title = redirect
+                continue
+
+            print("No infobox found")
+            return
+            
+        except:
+            #erreur pendant le décodage de l'objet json de wikipedia
+            if dataDict != None:
+                obj = dataDict["error"]["info"].encode('utf-8')
+                print(json.dumps(obj))
+            else:
+                print("Syntax error while loading json data: %s" % data)
+            return
+    
 def read_UserData() :
 	with open("UserData","rb") as fichier :
 		monPickler = pickle.Unpickler(fichier)
@@ -28,8 +141,8 @@ def write_UserData(DataBank) :
 
 def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	if tableauMot[0] == '/help' :
-		bot.sendMessage(chat_id,'They call me the Wikiwiki, I can help you make researches on Wikipedia. \nYou can control me by sending these commands: \nEnter /get + researched word to search a word on Wikipedia. \nEnter /language to change the language. \nEnter /rate to rate the bot. \nEnter /start to see your precedent messages. \nEnter /send to send a sticker, photo or document.')
-	elif tableauMot[0] == '/get':
+		bot.sendMessage(chat_id,'They call me the Wikiwiki, I can help you make researches on Wikipedia. \nYou can control me by sending these commands: \nEnter /get + researched word to search a word on Wikipedia. Enter get + researched word + *specific research. For example, you can enter /get Lyon *population.\nEnter /language to change the language. \nEnter /rate to rate the bot. \nEnter /start to see your precedent messages. \nEnter /send to send a sticker, photo or document.')
+	elif tableauMot[0] == '/get': 
 		DataBank=read_UserData()
 		#SI l'utilisateur n'a pas encore sélectionné sa langue
 		if 'language' not in DataBank[i]['parametres'].keys():
@@ -47,17 +160,51 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 			try:
 				#tableauMot contient tous les mots après le /get
 				tableauMot = tableauMot[1:]
-				#tableauMot n'est plus un tableau mais une chaine de caractères
-				tableauMot = ' '.join(tableauMot[0:])
-				page = wikipedia.page(tableauMot)
-				bot.sendChatAction(chat_id, 'typing')
-				bot.sendMessage(chat_id,wikipedia.summary(tableauMot, sentences=1))
-				bot.sendChatAction(chat_id, 'typing')
-				bot.sendMessage(chat_id,page.url)
+				#chaineMot n'est plus un tableau mais une chaine de caractères
+				chaineMot = ' '.join(tableauMot[0:])
+				print(chaineMot)
+                #pas de recherche dans l'infobox
+				if '*' not in chaineMot :
+					page = wikipedia.page(chaineMot)
+					bot.sendChatAction(chat_id, 'typing')
+					bot.sendMessage(chat_id,wikipedia.summary(chaineMot, sentences=1))
+					bot.sendChatAction(chat_id, 'typing')
+					bot.sendMessage(chat_id,page.url)
+                #recherche dans une infobox
+				elif '*' not in tableauMot[0]:
+					bot.sendChatAction(chat_id, 'typing')
+					title=''
+					i=0
+					print(len(tableauMot))                    
+					                   
+					
+					index=chaineMot.index('*')
+					print(index)
+					info=chaineMot[index+1:].lower()
+					print(info)
+					longueur=info.count(' ') +1
+					while i<len(tableauMot)-longueur :
+						title = title + tableauMot[i] + ' '
+						i+=1
+					print(title) 
+					infobox=ast.literal_eval(printMediaWikiInfobox(title))
+					print(infobox)
+					#info=tableauMot[-1].replace('*','').lower()
+					if info in infobox :
+						bot.sendMessage(chat_id,infobox[info])
+					else :
+						liste =[]
+						for key, value in infobox.items() :
+							print(key)
+							key=key+' / '
+							liste.append(key)
+						bot.sendMessage(chat_id,"I didn't find this information. Here is the list of informations available : " + ' '.join(liste))
+				else :
+					bot.sendMessage(chat_id,"Type /get researched_word *researched_information")
 			except wikipedia.exceptions.PageError :
 				bot.sendMessage(chat_id, 'There is no result corresponding to your research')
 			except wikipedia.exceptions.DisambiguationError as e:
-				bot.sendMessage(chat_id,'This request sends several responses, what did uou mean ?  :')
+				bot.sendMessage(chat_id,'This request sends several responses, what did you mean ?  :')
 				bot.sendMessage(chat_id,e.options)
 	elif tableauMot[0] == '/rate':
 		#force_reply à true pour que la réponse de l'utilisateur soit prise en compte par le bot
@@ -65,10 +212,10 @@ def Commande(nouveau,i,chat_id, donneesU, msg,tableauMot, bot):
 	elif tableauMot[0] == '/start' :
 		#Si l'utilisateur tape /start au bot pour la première fois, sans avoir tapé de messages avant.
 		if nouveau:
-			bot.sendMessage(chat_id,"Hi {} {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia.\n type /get and the word you are looking for to have the information. \ntype /language to change the language. \ntype /rate to rate this bot. \ntype /start to have a welcome message. \ntype /send to send a sticker, photo or document. \nThis bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name'],msg['from']['last_name']))
+			bot.sendMessage(chat_id,"Hi {} and welcome on Wikiwiki. This bot will fetch the information you want directly on Wikipedia.\n type /get and the word you are looking for to have the information. \ntype /language to change the language. \ntype /rate to rate this bot. \ntype /start to have a welcome message. \ntype /send to send a sticker, photo or document. \nThis bot is still in the creating process. New fonctionnalities will appear later. Thank you.".format(msg['from']['first_name']))
 			bot.sendMessage(chat_id,'Please choose your language :',reply_markup={'keyboard': [['en'], ['fr']], 'force_reply': True})
 		else:
-			bot.sendMessage(chat_id,"Hi again {} {} !".format(msg['from']['first_name'],msg['from']['last_name']))
+			bot.sendMessage(chat_id,"Hi again {} !".format(msg['from']['first_name']))
 			DataBank=read_UserData()
 			#Comptage du nombre de messages envoyés par l'utilisateur depuis la première fois où il a parlé au bot
 			nb=0
@@ -169,7 +316,7 @@ def analyseTextNat(i,chat_id,donneesU,msg,tableauMot, bot):
 		#Sauvegarde du vote dans les paramètres de la base de données
 		write_UserData(DataBank)
 		#S'il s'agit d'une réponse à /language, ou /get ou /start pour la première fois, on enregistre la langue dans les paramètres
-	elif avant_dernier_message['text'] == '/language' or (avant_avant_dernier_message['text']=='/language' and avant_dernier_message['text']!='fr' and avant_dernier_message['text']!='en'):
+	elif avant_dernier_message['text'] == '/language' or '/get' in avant_dernier_message['text'] or '/start' in avant_dernier_message['text'] or (avant_avant_dernier_message['text']=='/language' and avant_dernier_message['text']!='fr' and avant_dernier_message['text']!='en'):
 		print('test')
 		while language==True:
 			print('test2')
